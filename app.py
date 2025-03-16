@@ -109,8 +109,7 @@ def login():
         if not check_password_hash(user[4], password):
             flash("Error: Incorrect password.", "error")
             return redirect(url_for('login'))
-
-        # If login is successful
+        
         session['username'] = user[1]
         session['role'] = user[5]
         flash("Login successful! Welcome back.", "success")
@@ -192,7 +191,7 @@ def close_auction(item_id):
 def admin_home():
     if 'username' in session and session['role'] == 'admin':
         cur = mysql.connection.cursor()
-        cur.execute("SELECT id, name, username, email, role FROM users")
+        cur.execute("SELECT id, name, username, email, role FROM users where username != 'admin'")
         users = cur.fetchall()
         cur.execute("SELECT * FROM auction_items WHERE status = 'active'")
         active_items = cur.fetchall()
