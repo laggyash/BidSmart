@@ -112,7 +112,6 @@ def login():
         
         session['username'] = user[1]
         session['role'] = user[5]
-        flash("Login successful! Welcome back.", "success")
 
         return redirect(url_for('user_home' if user[5] == 'user' else 'admin_home'))
 
