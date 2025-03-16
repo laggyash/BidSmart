@@ -1,0 +1,247 @@
+from flask import Flask, flash, render_template, request, redirect, url_for, session
+from flask_mysqldb import MySQL
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+
+# MySQL Configuration
+app.config['MYSQL_HOST'] = 'mysql-bidsmart.alwaysdata.net'
+app.config['MYSQL_USER'] = 'bidsmart'
+app.config['MYSQL_PASSWORD'] = 'jFgLoq6V'
+app.config['MYSQL_DB'] = 'bidsmart_db'
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_CONNECT_TIMEOUT'] = 20 
+
+
+mysql = MySQL(app)
+
+# Database Initialization
+def init_db():
+    cur = mysql.connection.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            email VARCHAR(100) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role ENUM('user', 'admin') DEFAULT 'user'
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS auction_items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            item_name VARCHAR(100) NOT NULL,
+            base_price DECIMAL(10,2) NOT NULL,
+            image_url TEXT NOT NULL,
+            status ENUM('active', 'closed', 'expired') DEFAULT 'active',
+            seller_username VARCHAR(50) NOT NULL,
+            FOREIGN KEY (seller_username) REFERENCES users(username)
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS bids (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            item_id INT NOT NULL,
+            bidder_username VARCHAR(50) NOT NULL,
+            bid_amount DECIMAL(10,2) NOT NULL,
+            bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (item_id) REFERENCES auction_items(id),
+            FOREIGN KEY (bidder_username) REFERENCES users(username)
+        )
+    ''')
+    mysql.connection.commit()
+    cur.close()
+
+@app.before_request
+def before_request():
+    init_db()
+
+# Landing Page Route
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# User Registration Route
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        username = request.form['username']
+        email = request.form['email']
+        password = generate_password_hash(request.form['password'])
+        role = request.form['role'] 
+        if role == 'admin' and request.form['admin_code'] != 'admin_bidsmart':
+            return "Invalid admin registration code!"
+
+        cur = mysql.connection.cursor()
+        try:
+            cur.execute("INSERT INTO users (name, username, email, password, role) VALUES (%s, %s, %s, %s, %s)", 
+                        (name, username, email, password, role))
+            mysql.connection.commit()
+            return redirect(url_for('login'))
+        except Exception as e:
+            mysql.connection.rollback()
+            print("Error:", e)
+        finally:
+            cur.close()
+        
+    return render_template('register.html')
+
+
+# User Login Route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+        
+        if user is None:
+            flash("Error: Username does not exist.", "error")
+            return redirect(url_for('login'))
+        
+        if not check_password_hash(user[4], password):
+            flash("Error: Incorrect password.", "error")
+            return redirect(url_for('login'))
+
+        # If login is successful
+        session['username'] = user[1]
+        session['role'] = user[5]
+        flash("Login successful! Welcome back.", "success")
+
+        return redirect(url_for('user_home' if user[5] == 'user' else 'admin_home'))
+
+    return render_template('login.html')
+
+# User Dashboard
+@app.route('/user_home')
+def user_home():
+    if 'username' in session:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM auction_items WHERE status = 'active'")
+        items = cur.fetchall()
+        cur.execute("SELECT * FROM auction_items WHERE seller_username = %s", (session['username'],))
+        user_items = cur.fetchall()
+        cur.close()
+        return render_template('user_home.html', username=session['username'], items=items, user_items=user_items)
+    return redirect(url_for('login'))
+
+# Submit an Auction Item
+@app.route('/submit_item', methods=['POST'])
+def submit_item():
+    if 'username' in session:
+        item_name = request.form['item_name']
+        base_price = request.form['base_price']
+        image_url = request.form['image_url']
+        seller_username = session['username']
+
+        cur = mysql.connection.cursor()
+
+        cur.execute("SELECT username FROM users WHERE username = %s", (seller_username,))
+        user = cur.fetchone()
+        
+        if not user:
+            flash("Error: Seller does not exist. Please log in again.", "error")
+            return redirect(url_for('user_home'))
+
+        cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username) VALUES (%s, %s, %s, %s)",
+                    (item_name, base_price, image_url, seller_username))
+        mysql.connection.commit()
+        cur.close()
+
+        flash("Item added successfully!", "success")
+        return redirect(url_for('user_home'))
+    
+    flash("You must be logged in to submit an item.", "error")
+    return redirect(url_for('login'))
+
+
+
+# Place a Bid
+@app.route('/bid', methods=['POST'])
+def place_bid():
+    if 'username' in session:
+        item_id = request.form['item_id']
+        bid_amount = request.form['bid_amount']
+        
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
+                    (item_id, session['username'], bid_amount))
+        mysql.connection.commit()
+        cur.close()
+    return redirect(url_for('user_home'))
+
+# Close an Auction
+@app.route('/close_auction/<int:item_id>')
+def close_auction(item_id):
+    if 'username' in session:
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE auction_items SET status = 'closed' WHERE id = %s AND seller_username = %s", (item_id, session['username']))
+        mysql.connection.commit()
+        cur.close()
+    return redirect(url_for('user_home'))
+
+# Admin Home Route
+@app.route('/admin_home')
+def admin_home():
+    if 'username' in session and session['role'] == 'admin':
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id, name, username, email, role FROM users")
+        users = cur.fetchall()
+        cur.execute("SELECT * FROM auction_items WHERE status = 'active'")
+        active_items = cur.fetchall()
+        cur.execute("SELECT * FROM auction_items WHERE status = 'expired'")
+        expired_items = cur.fetchall()
+        cur.execute("SELECT * FROM auction_items WHERE status = 'deleted'")
+        deleted_items = cur.fetchall()
+        cur.close()
+        return render_template('admin_home.html', users=users, active_items=active_items, expired_items=expired_items, deleted_items=deleted_items)
+    return redirect(url_for('login'))
+
+# Change User Role
+@app.route('/change_role/<int:user_id>', methods=['POST'])
+def change_role(user_id):
+    if 'username' in session and session['role'] == 'admin':
+        new_role = request.form['new_role']
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
+        mysql.connection.commit()
+        cur.close()
+    return redirect(url_for('admin_home'))
+
+# Delete User
+@app.route('/delete_user/<int:user_id>')
+def delete_user(user_id):
+    if 'username' in session and session['role'] == 'admin':
+        cur = mysql.connection.cursor()
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        mysql.connection.commit()
+        cur.close()
+    return redirect(url_for('admin_home'))
+
+# Change Auction Status
+@app.route('/change_status/<int:item_id>', methods=['POST'])
+def change_status(item_id):
+    if 'username' in session and session['role'] == 'admin':
+        new_status = request.form['new_status']
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE auction_items SET status = %s WHERE id = %s", (new_status, item_id))
+        mysql.connection.commit()
+        cur.close()
+    return redirect(url_for('admin_home'))
+
+# Logout Route
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    session.pop('role', None)
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    app.run(debug=True)

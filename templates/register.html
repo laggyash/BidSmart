@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register</title></head>
+<body>
+    <h2>Register</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <script>
+                alert("{{ message }}");
+            </script>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <form action="/register" method="post">
+        Name: <input type="text" name="name" required><br>
+        Username: <input type="text" name="username" required><br>
+        Email: <input type="email" name="email" required><br>
+        Password: <input type="password" name="password" required><br>
+        <label for="role">Register As:</label>
+        <select name="role" id="role" onchange="toggleAdminCode()">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+        
+        <div id="admin_code_section" style="display: none;">
+            <label for="admin_code">Admin Code:</label>
+            <input type="password" name="admin_code" id="admin_code">
+        </div>
+        
+        <script>
+        function toggleAdminCode() {
+            var role = document.getElementById("role").value;
+            var adminCodeSection = document.getElementById("admin_code_section");
+            adminCodeSection.style.display = (role === "admin") ? "block" : "none";
+        }
+        </script>
+</script>
+
+        <input type="submit" value="Register">
+    </form>
+    <p>Already have an account?</p>
+<a href="{{ url_for('login') }}">
+    <button type="button">Login</button>
+</a>
+</body>
+</html>

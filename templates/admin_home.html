@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Home - BidSmart</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    
+    <h2>Users</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user[0] }}</td>
+            <td>{{ user[1] }}</td>
+            <td>{{ user[2] }}</td>
+            <td>{{ user[3] }}</td>
+            <td>
+                <form method="POST" action="/change_role/{{ user[0] }}">
+                    <select name="new_role">
+                        <option value="user" {% if user[4] == 'user' %}selected{% endif %}>User</option>
+                        <option value="admin" {% if user[4] == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                    <button type="submit">Change</button>
+                </form>
+            </td>
+            <td><a href="/delete_user/{{ user[0] }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <h2>Active Auctions</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Item Name</th>
+            <th>Base Price</th>
+            <th>Seller</th>
+            <th>Actions</th>
+        </tr>
+        {% for item in active_items %}
+        <tr>
+            <td>{{ item[0] }}</td>
+            <td>{{ item[1] }}</td>
+            <td>{{ item[2] }}</td>
+            <td>{{ item[5] }}</td>
+            <td>
+                <form method="POST" action="/change_status/{{ item[0] }}">
+                    <select name="new_status">
+                        <option value="active" selected>Active</option>
+                        <option value="closed">Closed</option>
+                        <option value="expired">Expired</option>
+                        <option value="deleted">Deleted</option>
+                    </select>
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <h2>Expired Auctions</h2>
+    <ul>
+        {% for item in expired_items %}
+        <li>{{ item[1] }} - {{ item[2] }}</li>
+        {% endfor %}
+    </ul>
+    
+    <h2>Deleted Auctions</h2>
+    <ul>
+        {% for item in deleted_items %}
+        <li>{{ item[1] }} - {{ item[2] }}</li>
+        {% endfor %}
+    </ul>
+    
+    <a href="/logout">Logout</a>
+</body>
+</html>

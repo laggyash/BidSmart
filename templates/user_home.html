@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>User Dashboard</title></head>
+<body>
+    
+    <h2>Welcome, {{ username }}</h2>
+    <h3>Submit an Item for Auction</h3>
+    <form action="/submit_item" method="post">
+        
+        Item Name: <input type="text" name="item_name" required><br>
+        Base Price: <input type="number" step="0.01" name="base_price" required><br>
+        Image URL: <input type="text" name="image_url" required><br>
+        <input type="submit" value="Submit">
+    </form>
+    
+    <h3>Active Auctions</h3>
+    {% for item in items %}
+        <p>{{ item[1] }} - ${{ item[2] }} <br>
+        <img src="{{ item[3] }}" width="100"><br>
+        <form action="/bid" method="post">
+            <input type="hidden" name="item_id" value="{{ item[0] }}">
+            Bid Amount: <input type="number" step="0.01" name="bid_amount" required>
+            <input type="submit" value="Place Bid">
+        </form>
+        </p>
+    {% endfor %}
+</body>
+</html>
