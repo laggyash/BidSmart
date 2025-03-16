@@ -20,12 +20,19 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            flex-direction: column;
         }
 
         /* Header */
         header {
             text-align: center;
             padding: 20px;
+        }
+
+        /* Logo Styling */
+        .logo {
+            width: 200px; /* Adjust the size as needed */
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -68,6 +75,7 @@
 </head>
 <body>
     <header>
+        <img src="static/images/logo.png" alt="BidSmart Logo" class="logo">
         <h1>Welcome to BidSmart</h1>
         <div id="container">
             <a href="/register"><button>Register</button></a>
