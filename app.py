@@ -137,29 +137,33 @@ def submit_item():
         item_name = request.form['item_name']
         base_price = request.form['base_price']
         image_url = request.form['image_url']
-        seller_username = session['username']
+        seller_display_name = session['username']  # This is likely the displayed name, not actual username
 
         cur = mysql.connection.cursor()
 
-        cur.execute("SELECT username FROM users WHERE username = %s", (seller_username,))
-        user = cur.fetchone()
-        
-        if not user:
-            flash("Error: Seller does not exist. Please log in again.", "error")
-            return redirect(url_for('user_home'))
+        # Fetch the correct username from the users table
+        cur.execute("SELECT username FROM users WHERE name = %s", (seller_display_name,))
+        seller_username = cur.fetchone()
 
-        cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username) VALUES (%s, %s, %s, %s)",
-                    (item_name, base_price, image_url, seller_username))
-        mysql.connection.commit()
+        if not seller_username:
+            print(f"ERROR: No matching username found for display name '{seller_display_name}'")
+            return "Error: Invalid seller name.", 400  # Bad request
+
+        seller_username = seller_username[0]  # Extract the value
+
+        try:
+            cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username, status) VALUES (%s, %s, %s, %s, 'active')",
+                        (item_name, base_price, image_url, seller_username))
+            mysql.connection.commit()
+            print(f"DEBUG: Insert successful! Item added by '{seller_username}'")
+        except Exception as e:
+            mysql.connection.rollback()
+            print("ERROR: Failed to insert item ->", str(e))
+
         cur.close()
-
-        flash("Item added successfully!", "success")
         return redirect(url_for('user_home'))
-    
-    flash("You must be logged in to submit an item.", "error")
-    return redirect(url_for('login'))
-
-
+    else:
+        return redirect(url_for('login'))
 
 # Place a Bid
 @app.route('/bid', methods=['POST'])
@@ -167,10 +171,13 @@ def place_bid():
     if 'username' in session:
         item_id = request.form['item_id']
         bid_amount = request.form['bid_amount']
+        bidder_name = session['username']
         
         cur = mysql.connection.cursor()
+        cur.execute("SELECT username FROM users WHERE name = %s", (bidder_name,))
+        bidder_username = cur.fetchone()
         cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
-                    (item_id, session['username'], bid_amount))
+                    (item_id, bidder_username, bid_amount))
         mysql.connection.commit()
         cur.close()
     return redirect(url_for('user_home'))
@@ -196,9 +203,12 @@ def admin_home():
         active_items = cur.fetchall()
         cur.execute("SELECT * FROM auction_items WHERE status = 'expired'")
         expired_items = cur.fetchall()
-        cur.execute("SELECT * FROM auction_items WHERE status = 'deleted'")
+        cur.execute("SELECT * FROM auction_items WHERE status = 'closed'")
         deleted_items = cur.fetchall()
         cur.close()
+        
+        print("DEBUG: Active Items:", active_items)  # Debugging print statement
+        
         return render_template('admin_home.html', users=users, active_items=active_items, expired_items=expired_items, deleted_items=deleted_items)
     return redirect(url_for('login'))
 

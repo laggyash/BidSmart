@@ -131,7 +131,7 @@
             </tr>
             {% for user in users %}
             <tr>
-                <td>{{ user[0] }}</td>
+                <td>{{ loop.index }}</td>
                 <td>{{ user[1] }}</td>
                 <td>{{ user[2] }}</td>
                 <td>{{ user[3] }}</td>
@@ -160,7 +160,7 @@
             </tr>
             {% for item in active_items %}
             <tr>
-                <td>{{ item[0] }}</td>
+                <td>{{ loop.index }}</td>
                 <td>{{ item[1] }}</td>
                 <td>{{ item[2] }}</td>
                 <td>{{ item[5] }}</td>
@@ -170,7 +170,6 @@
                             <option value="active" selected>Active</option>
                             <option value="closed">Closed</option>
                             <option value="expired">Expired</option>
-                            <option value="deleted">Deleted</option>
                         </select>
                         <button type="submit">Update</button>
                     </form>
@@ -180,18 +179,53 @@
         </table>
 
         <h2>Expired Auctions</h2>
-        <ul>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Item Name</th>
+                <th>Base Price</th>
+                <th>Seller</th>
+                <th>Actions</th>
+            </tr>
             {% for item in expired_items %}
-            <li>{{ item[1] }} - {{ item[2] }}</li>
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[5] }}</td>
+                <td>
+                    <form method="POST" action="/change_status/{{ item[0] }}">
+                        <select name="new_status">
+                            <option value="active">Active</option>
+                            <option value="closed">Closed</option>
+                            <option value="expired" selected>Expired</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
             {% endfor %}
-        </ul>
+        </table>
 
-        <h2>Deleted Auctions</h2>
-        <ul>
+        <h2>Closed Auctions</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Item Name</th>
+                <th>Base Price</th>
+                <th>Seller</th>
+                <th>Status</th>
+            </tr>
             {% for item in deleted_items %}
-            <li>{{ item[1] }} - {{ item[2] }}</li>
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[5] }}</td>
+                <td>Closed</td>
+            </tr>
             {% endfor %}
-        </ul>
+        </table>
 
         <a href="/logout" class="logout">Logout</a>
     </div>
