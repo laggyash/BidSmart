@@ -110,7 +110,7 @@ def login():
             flash("Error: Incorrect password.", "error")
             return redirect(url_for('login'))
         
-        session['username'] = user[1]
+        session['username'] = user[2]
         session['role'] = user[5]
 
         return redirect(url_for('user_home' if user[5] == 'user' else 'admin_home'))
@@ -124,7 +124,9 @@ def user_home():
         username = session['username']
         cur = mysql.connection.cursor()
 
-        # Fetch items listed by the user
+        cur.execute("SELECT name FROM users WHERE username = %s", (username,))
+        user_name = cur.fetchone()[0]
+        
         cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'active'", (username,))
         active_items = cur.fetchall()
 
@@ -134,12 +136,11 @@ def user_home():
         cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'closed'", (username,))
         closed_items = cur.fetchall()
 
-        # Fetch items from other users for bidding
         cur.execute("SELECT * FROM auction_items WHERE seller_username != %s AND status = 'active'", (username,))
         bid_items = cur.fetchall()
 
         cur.close()
-        return render_template('user_home.html', active_items=active_items, expired_items=expired_items, closed_items=closed_items, bid_items=bid_items)
+        return render_template('user_home.html',user_name = user_name,username = username, active_items=active_items, expired_items=expired_items, closed_items=closed_items, bid_items=bid_items)
     return redirect(url_for('login'))
 
 
@@ -150,19 +151,9 @@ def submit_item():
         item_name = request.form['item_name']
         base_price = request.form['base_price']
         image_url = request.form['image_url']
-        seller_display_name = session['username']  # This is likely the displayed name, not actual username
+        seller_username = session['username']  # This is likely the displayed name, not actual username
 
         cur = mysql.connection.cursor()
-
-        # Fetch the correct username from the users table
-        cur.execute("SELECT username FROM users WHERE name = %s", (seller_display_name,))
-        seller_username = cur.fetchone()
-
-        if not seller_username:
-            print(f"ERROR: No matching username found for display name '{seller_display_name}'")
-            return "Error: Invalid seller name.", 400  # Bad request
-
-        seller_username = seller_username[0]  # Extract the value
 
         try:
             cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username, status) VALUES (%s, %s, %s, %s, 'active')",
@@ -184,11 +175,9 @@ def place_bid():
     if 'username' in session:
         item_id = request.form['item_id']
         bid_amount = request.form['bid_amount']
-        bidder_name = session['username']
+        bidder_username = session['username']
         
         cur = mysql.connection.cursor()
-        cur.execute("SELECT username FROM users WHERE name = %s", (bidder_name,))
-        bidder_username = cur.fetchone()
         cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
                     (item_id, bidder_username, bid_amount))
         mysql.connection.commit()
@@ -204,7 +193,7 @@ def close_auction():
         cur.execute("UPDATE auction_items SET status = 'closed' WHERE id = %s AND seller_username = %s", (item_id, session['username']))
         mysql.connection.commit()
         cur.close()
-    return redirect(url_for('user_home'))
+    return redirect(url_for('my_items'))
 
 
 # Admin Home Route
@@ -221,8 +210,6 @@ def admin_home():
         cur.execute("SELECT * FROM auction_items WHERE status = 'closed'")
         deleted_items = cur.fetchall()
         cur.close()
-        
-        print("DEBUG: Active Items:", active_items)  # Debugging print statement
         
         return render_template('admin_home.html', users=users, active_items=active_items, expired_items=expired_items, deleted_items=deleted_items)
     return redirect(url_for('login'))
@@ -274,10 +261,14 @@ def submit_item_page():
 def my_items_page():
     username = session.get('username')
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s", (username,))
-    my_items = cur.fetchall()
+    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'active'", (username,))
+    active_items = cur.fetchall()
+    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'closed'", (username,))
+    closed_items = cur.fetchall()
+    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'expired'", (username,))
+    expired_items = cur.fetchall()
     cur.close()
-    return render_template('my_items.html', my_items=my_items)
+    return render_template('my_items.html', active_items=active_items, closed_items=closed_items, expired_items=expired_items)
 
 @app.route('/bid_items_page')
 def bid_items_page():
