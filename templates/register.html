@@ -1,149 +1,148 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Register</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
     <style>
-        /* General Page Styling */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f8ff;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
 
-        /* Logo Styling */
-        .logo-container {
-            text-align: center;
-            margin-top: 20px;
-        }
+      .logo-container {
+        text-align: center;
+        margin-top: 20px;
+      }
 
-        .logo-container img {
-            width: 150px; /* Adjust size as needed */
-            height: auto;
-        }
+      .logo-container img {
+        width: 150px;
+        height: auto;
+      }
 
-        h2 {
-            color: #007bff;
-            margin-top: 10px;
-        }
+      h2 {
+        color: #007bff;
+        margin-top: 10px;
+      }
 
-        /* Form Styling */
-        form {
-            background: white;
-            width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
+      form {
+        background: white;
+        width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: left;
+      }
 
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 10px;
-        }
+      label {
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+      }
 
-        input, select {
-            width: calc(100% - 20px);
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            display: block;
-        }
+      input,
+      select {
+        width: calc(100% - 20px);
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: block;
+      }
 
-        /* Buttons */
-        input[type="submit"], button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-        }
+      input[type="submit"],
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 15px;
+      }
 
-        input[type="submit"]:hover, button:hover {
-            background-color: #0056b3;
-        }
+      input[type="submit"]:hover,
+      button:hover {
+        background-color: #0056b3;
+      }
 
-        /* Admin Code Section */
-        #admin_code_section {
-            margin-top: 10px;
-        }
+      #admin_code_section {
+        margin-top: 10px;
+      }
 
-        /* Bottom Text */
-        p {
-            font-size: 14px;
-            margin-top: 10px;
-        }
+      p {
+        font-size: 14px;
+        margin-top: 10px;
+      }
 
-        a button {
-            width: 10%;
-        }
+      a button {
+        width: 10%;
+      }
     </style>
-</head>
-<body>
-    <!-- Logo at the top -->
+  </head>
+  <body>
     <div class="logo-container">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BidSmart Logo">
+      <img
+        src="{{ url_for('static', filename='images/logo.png') }}"
+        alt="BidSmart Logo"
+      />
     </div>
 
     <h2>Register</h2>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <script>
-                alert("{{ message }}");
-            </script>
-        {% endfor %}
-    {% endif %}
-    {% endwith %}
-    
-    <form action="/register" method="post">
-        <label>Name:</label>
-        <input type="text" name="name" required>
-        
-        <label>Username:</label>
-        <input type="text" name="username" required>
-        
-        <label>Email:</label>
-        <input type="email" name="email" required>
-        
-        <label>Password:</label>
-        <input type="password" name="password" required>
-        
-        <label for="role">Register As:</label>
-        <select name="role" id="role" onchange="toggleAdminCode()">
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-        </select>
-        
-        <div id="admin_code_section" style="display: none;">
-            <label for="admin_code">Admin Code:</label>
-            <input type="password" name="admin_code" id="admin_code">
-        </div>
-        
-        <script>
-        function toggleAdminCode() {
-            var role = document.getElementById("role").value;
-            var adminCodeSection = document.getElementById("admin_code_section");
-            adminCodeSection.style.display = (role === "admin") ? "block" : "none";
-        }
-        </script>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <script>
+      alert("{{ message }}");
+    </script>
+    {% endfor %} {% endif %} {% endwith %}
 
-        <input type="submit" value="Register">
+    <form action="/register" method="post">
+      <label>Name:</label>
+      <input type="text" name="name" required />
+
+      <label>Username:</label>
+      <input type="text" name="username" required />
+
+      <label>Email:</label>
+      <input type="email" name="email" required />
+
+      <label>Password:</label>
+      <input type="password" name="password" required />
+
+      <label for="role">Register As:</label>
+      <select name="role" id="role" onchange="toggleAdminCode()">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <div id="admin_code_section" style="display: none">
+        <label for="admin_code">Admin Code:</label>
+        <input type="password" name="admin_code" id="admin_code" />
+      </div>
+
+      <script>
+        function toggleAdminCode() {
+          var role = document.getElementById("role").value;
+          var adminCodeSection = document.getElementById("admin_code_section");
+          adminCodeSection.style.display = role === "admin" ? "block" : "none";
+        }
+      </script>
+
+      <input type="submit" value="Register" />
     </form>
 
     <p>Already have an account?</p>
     <a href="{{ url_for('login') }}">
-        <button type="button">Login</button>
+      <button type="button">Login</button>
     </a>
-</body>
+  </body>
 </html>

@@ -5,7 +5,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# MySQL Configuration
 app.config['MYSQL_HOST'] = 'mysql-bidsmart.alwaysdata.net'
 app.config['MYSQL_USER'] = 'bidsmart'
 app.config['MYSQL_PASSWORD'] = 'jFgLoq6V'
@@ -13,10 +12,9 @@ app.config['MYSQL_DB'] = 'bidsmart_db'
 app.config['MYSQL_PORT'] = 3306
 app.config['MYSQL_CONNECT_TIMEOUT'] = 20 
 
-
 mysql = MySQL(app)
 
-# Database Initialization
+
 def init_db():
     cur = mysql.connection.cursor()
     cur.execute('''
@@ -54,16 +52,17 @@ def init_db():
     mysql.connection.commit()
     cur.close()
 
+
 @app.before_request
 def before_request():
     init_db()
 
-# Landing Page Route
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# User Registration Route
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -71,6 +70,7 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = generate_password_hash(request.form['password'])
+        
         role = request.form['role'] 
         if role == 'admin' and request.form['admin_code'] != 'admin_bidsmart':
             return "Invalid admin registration code!"
@@ -90,7 +90,6 @@ def register():
     return render_template('register.html')
 
 
-# User Login Route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -117,7 +116,7 @@ def login():
 
     return render_template('login.html')
 
-# User Dashboard
+
 @app.route('/user_home')
 def user_home():
     if 'username' in session:
@@ -144,15 +143,14 @@ def user_home():
     return redirect(url_for('login'))
 
 
-# Submit an Auction Item
 @app.route('/submit_item', methods=['POST'])
 def submit_item():
     if 'username' in session:
         item_name = request.form['item_name']
         base_price = request.form['base_price']
         image_url = request.form['image_url']
-        seller_username = session['username']  # This is likely the displayed name, not actual username
-
+        seller_username = session['username']  
+        
         cur = mysql.connection.cursor()
 
         try:
@@ -169,7 +167,7 @@ def submit_item():
     else:
         return redirect(url_for('login'))
 
-# Place a Bid
+
 @app.route('/bid', methods=['POST'])
 def place_bid():
     if 'username' in session:
@@ -184,7 +182,7 @@ def place_bid():
         cur.close()
     return redirect(url_for('user_home'))
 
-# Close an Auction
+
 @app.route('/close_auction', methods=['POST'])
 def close_auction():
     if 'username' in session:
@@ -196,7 +194,6 @@ def close_auction():
     return redirect(url_for('my_items'))
 
 
-# Admin Home Route
 @app.route('/admin_home')
 def admin_home():
     if 'username' in session and session['role'] == 'admin':
@@ -214,7 +211,7 @@ def admin_home():
         return render_template('admin_home.html', users=users, active_items=active_items, expired_items=expired_items, deleted_items=deleted_items)
     return redirect(url_for('login'))
 
-# Change User Role
+
 @app.route('/change_role/<int:user_id>', methods=['POST'])
 def change_role(user_id):
     if 'username' in session and session['role'] == 'admin':
@@ -225,7 +222,7 @@ def change_role(user_id):
         cur.close()
     return redirect(url_for('admin_home'))
 
-# Delete User
+
 @app.route('/delete_user/<int:user_id>')
 def delete_user(user_id):
     if 'username' in session and session['role'] == 'admin':
@@ -235,7 +232,7 @@ def delete_user(user_id):
         cur.close()
     return redirect(url_for('admin_home'))
 
-# Change Auction Status
+
 @app.route('/change_status/<int:item_id>', methods=['POST'])
 def change_status(item_id):
     if 'username' in session and session['role'] == 'admin':
@@ -246,16 +243,18 @@ def change_status(item_id):
         cur.close()
     return redirect(url_for('admin_home'))
 
-# Logout Route
+
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     session.pop('role', None)
     return redirect(url_for('login'))
 
+
 @app.route('/submit_item_page')
 def submit_item_page():
     return render_template('submit_item.html')
+
 
 @app.route('/my_items_page')
 def my_items_page():
@@ -269,6 +268,7 @@ def my_items_page():
     expired_items = cur.fetchall()
     cur.close()
     return render_template('my_items.html', active_items=active_items, closed_items=closed_items, expired_items=expired_items)
+
 
 @app.route('/bid_items_page')
 def bid_items_page():

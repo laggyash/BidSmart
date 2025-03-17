@@ -1,94 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>User Dashboard</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f5ff;
-            color: #333;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f5ff;
+        color: #333;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
 
-        .container {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+      .container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
 
-        .logo-container {
-            margin-bottom: 20px;
-        }
+      .logo-container {
+        margin-bottom: 20px;
+      }
 
-        .logo {
-            max-width: 150px;
-            height: auto;
-        }
+      .logo {
+        max-width: 150px;
+        height: auto;
+      }
 
-        h2 {
-            color: #0056b3;
-        }
+      h2 {
+        color: #0056b3;
+      }
 
-        .nav-links {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+      .nav-links {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-        .nav-links a {
-            display: block;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: 0.3s;
-        }
+      .nav-links a {
+        display: block;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: 0.3s;
+      }
 
-        .nav-links a:hover {
-            background-color: #0056b3;
-        }
+      .nav-links a:hover {
+        background-color: #0056b3;
+      }
 
-        .logout {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background: #dc3545;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
+      .logout {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 15px;
+        background: #dc3545;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: 0.3s;
+      }
 
-        .logout:hover {
-            background: #b02a37;
-        }
+      .logout:hover {
+        background: #b02a37;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="logo-container">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BidSmart Logo" class="logo">
-        </div>
+      <div class="logo-container">
+        <img
+          src="{{ url_for('static', filename='images/logo.png') }}"
+          alt="BidSmart Logo"
+          class="logo"
+        />
+      </div>
 
-        <h2>Welcome, {{ user_name }}</h2>
+      <h2>Welcome, {{ user_name }}</h2>
 
-        <div class="nav-links">
-            <a href="{{ url_for('submit_item_page') }}">Submit an Item</a>
-            <a href="{{ url_for('my_items_page') }}">My Items</a>
-            <a href="{{ url_for('bid_items_page') }}">Bid on Items</a>
-        </div>
+      <div class="nav-links">
+        <a href="{{ url_for('submit_item_page') }}">Submit an Item</a>
+        <a href="{{ url_for('my_items_page') }}">My Items</a>
+        <a href="{{ url_for('bid_items_page') }}">Bid on Items</a>
+      </div>
 
-        <a href="/logout" class="logout">Logout</a>
+      <a href="/logout" class="logout">Logout</a>
     </div>
-</body>
+  </body>
 </html>

@@ -1,136 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Items</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f5ff;
-            color: #333;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f5ff;
+        color: #333;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
 
-        .container {
-            max-width: 1000px;
-            width: 90%;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+      .container {
+        max-width: 1000px;
+        width: 90%;
+        margin: 30px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
 
-        h2 {
-            color: #0056b3;
-        }
+      h2 {
+        color: #0056b3;
+      }
 
-        .items-section {
-            margin-top: 20px;
-        }
+      .items-section {
+        margin-top: 20px;
+      }
 
-        .items-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
+      .items-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+      }
 
-        .auction-card {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 220px;
-            text-align: center;
-        }
+      .auction-card {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 220px;
+        text-align: center;
+      }
 
-        .auction-card p {
-            margin: 10px 0;
-            font-weight: bold;
-        }
+      .auction-card p {
+        margin: 10px 0;
+        font-weight: bold;
+      }
 
-        form {
-            margin-top: 10px;
-        }
+      form {
+        margin-top: 10px;
+      }
 
-        input[type="submit"] {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            width: 100%;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
+      input[type="submit"] {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+        transition: 0.3s;
+      }
 
-        input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
+      input[type="submit"]:hover {
+        background-color: #0056b3;
+      }
 
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
+      a {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 15px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: 0.3s;
+      }
 
-        a:hover {
-            background: #0056b3;
-        }
+      a:hover {
+        background: #0056b3;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h2>My Auction Items</h2>
+      <h2>My Auction Items</h2>
 
-        <div class="items-section">
-            <h3>Active Items</h3>
-            <div class="items-grid">
-                {% for item in active_items %}
-                <div class="auction-card">
-                    <p>{{ item[1] }} - ${{ item[2] }}</p>
-                    <form action="/close_auction" method="post">
-                        <input type="hidden" name="item_id" value="{{ item[0] }}">
-                        <input type="submit" value="Close Auction">
-                    </form>
-                </div>
-                {% endfor %}
-            </div>
+      <div class="items-section">
+        <h3>Active Items</h3>
+        <div class="items-grid">
+          {% for item in active_items %}
+          <div class="auction-card">
+            <p>{{ item[1] }} - ${{ item[2] }}</p>
+            <form action="/close_auction" method="post">
+              <input type="hidden" name="item_id" value="{{ item[0] }}" />
+              <input type="submit" value="Close Auction" />
+            </form>
+          </div>
+          {% endfor %}
         </div>
+      </div>
 
-        <div class="items-section">
-            <h3>Expired Items</h3>
-            <div class="items-grid">
-                {% for item in expired_items %}
-                <div class="auction-card">
-                    <p>{{ item[1] }} - Expired</p>
-                </div>
-                {% endfor %}
-            </div>
+      <div class="items-section">
+        <h3>Expired Items</h3>
+        <div class="items-grid">
+          {% for item in expired_items %}
+          <div class="auction-card">
+            <p>{{ item[1] }} - Expired</p>
+          </div>
+          {% endfor %}
         </div>
+      </div>
 
-        <div class="items-section">
-            <h3>Closed Items</h3>
-            <div class="items-grid">
-                {% for item in closed_items %}
-                <div class="auction-card">
-                    <p>{{ item[1] }} - Closed</p>
-                </div>
-                {% endfor %}
-            </div>
+      <div class="items-section">
+        <h3>Closed Items</h3>
+        <div class="items-grid">
+          {% for item in closed_items %}
+          <div class="auction-card">
+            <p>{{ item[1] }} - Closed</p>
+          </div>
+          {% endfor %}
         </div>
+      </div>
 
-        <a href="{{ url_for('user_home') }}">Back to Home</a>
+      <a href="{{ url_for('user_home') }}">Back to Home</a>
     </div>
-</body>
+  </body>
 </html>
