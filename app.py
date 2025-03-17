@@ -121,14 +121,27 @@ def login():
 @app.route('/user_home')
 def user_home():
     if 'username' in session:
+        username = session['username']
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM auction_items WHERE status = 'active'")
-        items = cur.fetchall()
-        cur.execute("SELECT * FROM auction_items WHERE seller_username = %s", (session['username'],))
-        user_items = cur.fetchall()
+
+        # Fetch items listed by the user
+        cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'active'", (username,))
+        active_items = cur.fetchall()
+
+        cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'expired'", (username,))
+        expired_items = cur.fetchall()
+
+        cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'closed'", (username,))
+        closed_items = cur.fetchall()
+
+        # Fetch items from other users for bidding
+        cur.execute("SELECT * FROM auction_items WHERE seller_username != %s AND status = 'active'", (username,))
+        bid_items = cur.fetchall()
+
         cur.close()
-        return render_template('user_home.html', username=session['username'], items=items, user_items=user_items)
+        return render_template('user_home.html', active_items=active_items, expired_items=expired_items, closed_items=closed_items, bid_items=bid_items)
     return redirect(url_for('login'))
+
 
 # Submit an Auction Item
 @app.route('/submit_item', methods=['POST'])
@@ -183,14 +196,16 @@ def place_bid():
     return redirect(url_for('user_home'))
 
 # Close an Auction
-@app.route('/close_auction/<int:item_id>')
-def close_auction(item_id):
+@app.route('/close_auction', methods=['POST'])
+def close_auction():
     if 'username' in session:
+        item_id = request.form['item_id']
         cur = mysql.connection.cursor()
         cur.execute("UPDATE auction_items SET status = 'closed' WHERE id = %s AND seller_username = %s", (item_id, session['username']))
         mysql.connection.commit()
         cur.close()
     return redirect(url_for('user_home'))
+
 
 # Admin Home Route
 @app.route('/admin_home')
@@ -250,6 +265,29 @@ def logout():
     session.pop('username', None)
     session.pop('role', None)
     return redirect(url_for('login'))
+
+@app.route('/submit_item_page')
+def submit_item_page():
+    return render_template('submit_item.html')
+
+@app.route('/my_items_page')
+def my_items_page():
+    username = session.get('username')
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s", (username,))
+    my_items = cur.fetchall()
+    cur.close()
+    return render_template('my_items.html', my_items=my_items)
+
+@app.route('/bid_items_page')
+def bid_items_page():
+    username = session.get('username')
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM auction_items WHERE seller_username != %s AND status = 'active'", (username,))
+    bid_items = cur.fetchall()
+    cur.close()
+    return render_template('bid_items.html', bid_items=bid_items)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

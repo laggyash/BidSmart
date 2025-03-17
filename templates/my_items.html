@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Items</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f5ff; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>My Auction Items</h2>
+
+        <h3>Active Items</h3>
+        {% for item in active_items %}
+        <p><strong>{{ item[1] }}</strong> - ${{ item[2] }}</p>
+        <form action="/close_item" method="post">
+            <input type="hidden" name="item_id" value="{{ item[0] }}">
+            <input type="submit" value="Close Auction">
+        </form>
+        {% endfor %}
+
+        <h3>Expired Items</h3>
+        {% for item in expired_items %}
+        <p><strong>{{ item[1] }}</strong> - Expired</p>
+        {% endfor %}
+
+        <h3>Closed Items</h3>
+        {% for item in closed_items %}
+        <p><strong>{{ item[1] }}</strong> - Closed</p>
+        {% endfor %}
+
+        <br>
+        <a href="{{ url_for('user_home') }}">Back to Home</a>
+    </div>
+</body>
+</html>
