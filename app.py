@@ -145,6 +145,10 @@ def user_home():
         return render_template('user_home.html',user_name = user_name,username = username, active_items=active_items, expired_items=expired_items, closed_items=closed_items, bid_items=bid_items)
     return redirect(url_for('login'))
 
+@app.route('/submit_item_page')
+def submit_item_page():
+    return render_template('submit_item.html')
+
 
 @app.route('/submit_item', methods=['POST'])
 def submit_item():
