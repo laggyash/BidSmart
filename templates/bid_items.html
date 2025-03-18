@@ -97,18 +97,58 @@
       a:hover {
         background: #0056b3;
       }
+      .flash-messages {
+        margin: 20px auto;
+        padding: 10px;
+        width: 80%;
+        max-width: 600px;
+      }
+
+      .flash-message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .flash-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
     </style>
   </head>
   <body>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
     <div class="container">
       <h2>Bid on Auction Items</h2>
 
       <div class="items-grid">
         {% for item in bid_items %}
         <div class="auction-card">
-          <img src="{{ item[3] }}" alt="Auction Item" style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px;">
+          <img src="{{ item[3] }}" alt="Auction Item" />
           <p><strong>{{ item[1] }}</strong> - ${{ item[2] }}</p>
-          <p>Highest Bid: {{ item[4] }}</p>
+
+          <!-- Display the highest bid -->
+          <p>
+            <strong>Highest Bid:</strong>
+            {% if item[4] %} ${{ item[4] }} {% else %} None {% endif %}
+          </p>
+
           <form action="/bid" method="post" class="bid-form">
             <input type="hidden" name="item_id" value="{{ item[0] }}" />
             <label>Bid Amount:</label>
@@ -118,7 +158,6 @@
         </div>
         {% endfor %}
       </div>
-      
 
       <a href="{{ url_for('user_home') }}">Back to Home</a>
     </div>

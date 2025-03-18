@@ -166,22 +166,36 @@ def submit_item():
     flash("You must be logged in to submit an item.", "error")
     return redirect(url_for('login'))
 
-
-
 @app.route('/bid', methods=['POST'])
 def place_bid():
     if 'username' in session:
         item_id = request.form['item_id']
-        bid_amount = request.form['bid_amount']
+        bid_amount = float(request.form['bid_amount'])  
         bidder_username = session['username']
-        
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
-                    (item_id, bidder_username, bid_amount))
-        mysql.connection.commit()
-        cur.close()
-    return redirect(url_for('user_home'))
 
+        cur = mysql.connection.cursor()
+
+        # Fetch base price and highest bid
+        cur.execute("""
+            SELECT base_price, COALESCE(MAX(bid_amount), 0) 
+            FROM auction_items 
+            LEFT JOIN bids ON auction_items.id = bids.item_id 
+            WHERE auction_items.id = %s
+        """, (item_id,))
+        base_price, highest_bid = cur.fetchone()
+
+        # Validate bid amount
+        if bid_amount <= base_price or bid_amount <= highest_bid:
+            flash("Error: Bid must be higher than the base price and the current highest bid.", "error")
+        else:
+            cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
+                        (item_id, bidder_username, bid_amount))
+            mysql.connection.commit()
+            flash("Bid placed successfully!", "success")
+
+        cur.close()
+
+    return redirect(request.referrer) 
 
 @app.route('/close_auction', methods=['POST'])
 def close_auction():
@@ -307,9 +321,9 @@ def bid_items():
            COALESCE(MAX(b.bid_amount), 'None') AS highest_bid
     FROM auction_items ai
     LEFT JOIN bids b ON ai.id = b.item_id
-    WHERE ai.status = 'active'
+    WHERE ai.status = 'active' AND ai.seller_username != %s
     GROUP BY ai.id, ai.item_name, ai.base_price, ai.image_url
-""")
+""", (username,))
     bid_items = cur.fetchall()
     cur.close()
     return render_template('bid_items.html', bid_items=bid_items)
