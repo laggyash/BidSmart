@@ -1,9 +1,11 @@
 from flask import Flask, flash, render_template, request, redirect, url_for, session
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'passkey'
 
 app.config['MYSQL_HOST'] = 'mysql-bidsmart.alwaysdata.net'
 app.config['MYSQL_USER'] = 'bidsmart'
@@ -13,7 +15,6 @@ app.config['MYSQL_PORT'] = 3306
 app.config['MYSQL_CONNECT_TIMEOUT'] = 20 
 
 mysql = MySQL(app)
-
 
 def init_db():
     cur = mysql.connection.cursor()
@@ -33,11 +34,13 @@ def init_db():
             item_name VARCHAR(100) NOT NULL,
             base_price DECIMAL(10,2) NOT NULL,
             image_url TEXT NOT NULL,
-            status ENUM('active', 'closed', 'expired') DEFAULT 'active',
+            status ENUM('active', 'closed', 'expired', 'deleted') DEFAULT 'active',
             seller_username VARCHAR(50) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (seller_username) REFERENCES users(username)
         )
     ''')
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS bids (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -149,23 +152,20 @@ def submit_item():
         item_name = request.form['item_name']
         base_price = request.form['base_price']
         image_url = request.form['image_url']
-        seller_username = session['username']  
-        
+        seller_username = session['username']
+
         cur = mysql.connection.cursor()
-
-        try:
-            cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username, status) VALUES (%s, %s, %s, %s, 'active')",
-                        (item_name, base_price, image_url, seller_username))
-            mysql.connection.commit()
-            print(f"DEBUG: Insert successful! Item added by '{seller_username}'")
-        except Exception as e:
-            mysql.connection.rollback()
-            print("ERROR: Failed to insert item ->", str(e))
-
+        cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username, created_at, status) VALUES (%s, %s, %s, %s, NOW(), 'active')",
+                    (item_name, base_price, image_url, seller_username))
+        mysql.connection.commit()
         cur.close()
+
+        flash("Item added successfully! It will be active for 3 days.", "success")
         return redirect(url_for('user_home'))
-    else:
-        return redirect(url_for('login'))
+    
+    flash("You must be logged in to submit an item.", "error")
+    return redirect(url_for('login'))
+
 
 
 @app.route('/bid', methods=['POST'])
@@ -250,35 +250,99 @@ def logout():
     session.pop('role', None)
     return redirect(url_for('login'))
 
+@app.route('/my_items')
+def my_items():
+    if 'username' not in session:
+        flash("You must be logged in to view your items.", "error")
+        return redirect(url_for('login'))
 
-@app.route('/submit_item_page')
-def submit_item_page():
-    return render_template('submit_item.html')
-
-
-@app.route('/my_items_page')
-def my_items_page():
-    username = session.get('username')
+    seller_username = session['username']
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'active'", (username,))
+
+    cur.execute("""
+    SELECT ai.id, ai.item_name, ai.base_price, ai.image_url, 
+           COALESCE(MAX(b.bid_amount), 'None') AS highest_bid
+    FROM auction_items ai
+    LEFT JOIN bids b ON ai.id = b.item_id
+    WHERE ai.seller_username = %s AND ai.status = 'active'
+    GROUP BY ai.id, ai.item_name, ai.base_price, ai.image_url
+""", (session['username'],))
     active_items = cur.fetchall()
-    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'closed'", (username,))
+
+
+    cur.execute('''
+    SELECT a.id, a.item_name, a.base_price, a.status, 
+           COALESCE(u.email, 'Deleted') AS highest_bidder_email,
+           a.image_url,  -- Fetch image URL (always present)
+           (SELECT MAX(bid_amount) FROM bids WHERE item_id = a.id) AS highest_bid
+    FROM auction_items a
+    LEFT JOIN (
+        SELECT item_id, bidder_username 
+        FROM bids 
+        WHERE (item_id, bid_amount) IN (
+            SELECT item_id, MAX(bid_amount) 
+            FROM bids 
+            GROUP BY item_id
+        )
+    ) b ON a.id = b.item_id
+    LEFT JOIN users u ON b.bidder_username = u.username
+    WHERE a.seller_username = %s AND a.status = 'closed'
+''', (seller_username,))
+
     closed_items = cur.fetchall()
-    cur.execute("SELECT * FROM auction_items WHERE seller_username = %s AND status = 'expired'", (username,))
-    expired_items = cur.fetchall()
+
     cur.close()
-    return render_template('my_items.html', active_items=active_items, closed_items=closed_items, expired_items=expired_items)
+
+    return render_template('my_items.html', active_items=active_items, closed_items=closed_items)
 
 
-@app.route('/bid_items_page')
-def bid_items_page():
+
+
+@app.route('/bid_items')
+def bid_items():
     username = session.get('username')
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM auction_items WHERE seller_username != %s AND status = 'active'", (username,))
+    cur.execute("""
+    SELECT ai.id, ai.item_name, ai.base_price, ai.image_url, 
+           COALESCE(MAX(b.bid_amount), 'None') AS highest_bid
+    FROM auction_items ai
+    LEFT JOIN bids b ON ai.id = b.item_id
+    WHERE ai.status = 'active'
+    GROUP BY ai.id, ai.item_name, ai.base_price, ai.image_url
+""")
     bid_items = cur.fetchall()
     cur.close()
     return render_template('bid_items.html', bid_items=bid_items)
 
+def update_auction_status():
+    cur = mysql.connection.cursor()
+
+    three_days_ago = datetime.now() - timedelta(days=3)
+    cur.execute("SELECT id FROM auction_items WHERE status = 'active' AND created_at <= %s", (three_days_ago,))
+    expired_items = cur.fetchall()
+
+    for item in expired_items:
+        item_id = item[0]
+        cur.execute("""
+            SELECT u.email FROM bids b
+            JOIN users u ON b.bidder_username = u.username
+            WHERE b.item_id = %s
+            ORDER BY b.bid_amount DESC LIMIT 1
+        """, (item_id,))
+        highest_bidder = cur.fetchone()
+
+        if highest_bidder:
+            cur.execute("UPDATE auction_items SET status = 'closed' WHERE id = %s", (item_id,))
+        else:
+            cur.execute("UPDATE auction_items SET status = 'expired' WHERE id = %s", (item_id,))
+
+    mysql.connection.commit()
+    cur.close()
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=update_auction_status, trigger="interval", hours=1) 
+scheduler.start()
 
 if __name__ == '__main__':
     app.run(debug=True)

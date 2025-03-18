@@ -106,18 +106,19 @@
       <div class="items-grid">
         {% for item in bid_items %}
         <div class="auction-card">
-          <img src="{{ item[3] }}" alt="Auction Item" />
+          <img src="{{ item[3] }}" alt="Auction Item" style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px;">
           <p><strong>{{ item[1] }}</strong> - ${{ item[2] }}</p>
+          <p>Highest Bid: {{ item[4] }}</p>
           <form action="/bid" method="post" class="bid-form">
             <input type="hidden" name="item_id" value="{{ item[0] }}" />
             <label>Bid Amount:</label>
-            <!-- Change step value -->
             <input type="number" step="0.01" name="bid_amount" required />
             <input type="submit" value="Place Bid" />
           </form>
         </div>
         {% endfor %}
       </div>
+      
 
       <a href="{{ url_for('user_home') }}">Back to Home</a>
     </div>
