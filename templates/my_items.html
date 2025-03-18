@@ -103,20 +103,28 @@
       <div class="items-section">
         <h3>Active Items</h3>
         <div class="items-grid">
-            {% for item in active_items %}
-            <div class="auction-card">
-                <img src="{{ item[3] }}" alt="Item Image" style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px;">
-                <p>{{ item[1] }} - ${{ item[2] }}</p>
-                <p>Highest Bid: {{ item[4] }}</p>
-                <form action="/close_auction" method="post">
-                    <input type="hidden" name="item_id" value="{{ item[0] }}" />
-                    <input type="submit" value="Close Auction" />
-                </form>
-            </div>
-            {% endfor %}
+          {% for item in active_items %}
+          <div class="auction-card">
+            <img
+              src="{{ item[3] }}"
+              alt="Item Image"
+              style="
+                width: 100%;
+                height: 150px;
+                object-fit: cover;
+                border-radius: 5px;
+              "
+            />
+            <p>{{ item[1] }} - ${{ item[2] }}</p>
+            <p>Highest Bid: {{ item[4] }}</p>
+            <form action="/close_auction" method="post">
+              <input type="hidden" name="item_id" value="{{ item[0] }}" />
+              <input type="submit" value="Close Auction" />
+            </form>
+          </div>
+          {% endfor %}
         </div>
-    </div>
-    
+      </div>
 
       <div class="items-section">
         <h3>Expired Items</h3>
@@ -134,7 +142,6 @@
         <div class="items-grid">
           {% for item in closed_items %}
           <div class="auction-card">
-            <!-- Show Item Image -->
             <img
               src="{{ item[5] }}"
               alt="{{ item[1] }}"

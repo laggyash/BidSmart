@@ -143,7 +143,6 @@
           <img src="{{ item[3] }}" alt="Auction Item" />
           <p><strong>{{ item[1] }}</strong> - ${{ item[2] }}</p>
 
-          <!-- Display the highest bid -->
           <p>
             <strong>Highest Bid:</strong>
             {% if item[4] %} ${{ item[4] }} {% else %} None {% endif %}
@@ -152,7 +151,7 @@
           <form action="/bid" method="post" class="bid-form">
             <input type="hidden" name="item_id" value="{{ item[0] }}" />
             <label>Bid Amount:</label>
-            <input type="number" step="0.01" name="bid_amount" required />
+            <input type="number" step="0.10" name="bid_amount" required />
             <input type="submit" value="Place Bid" />
           </form>
         </div>
