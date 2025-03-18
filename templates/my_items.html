@@ -131,7 +131,22 @@
         <div class="items-grid">
           {% for item in expired_items %}
           <div class="auction-card">
+            <img
+              src="{{ item[5] }}"
+              alt="{{ item[1] }}"
+              style="width: 100px; height: auto; border-radius: 5px"
+            />
+
             <p>{{ item[1] }} - Expired</p>
+
+            {% if item[4] != 'Expired' %} {% if item[6] %} {# item[6] -> Highest
+            bid #}
+            <p>Highest Bid: ${{ item[6] }}</p>
+            {% endif %}
+            <p>Highest Bidder: {{ item[4] }}</p>
+            {% else %}
+            <p>Expired</p>
+            {% endif %}
           </div>
           {% endfor %}
         </div>

@@ -294,6 +294,26 @@ def my_items():
 
     cur.execute('''
     SELECT a.id, a.item_name, a.base_price, a.status, 
+           COALESCE(u.email, 'Expired') AS highest_bidder_email,
+           a.image_url, 
+           (SELECT MAX(bid_amount) FROM bids WHERE item_id = a.id) AS highest_bid
+    FROM auction_items a
+    LEFT JOIN (
+        SELECT item_id, bidder_username 
+        FROM bids 
+        WHERE (item_id, bid_amount) IN (
+            SELECT item_id, MAX(bid_amount) 
+            FROM bids 
+            GROUP BY item_id
+        )
+    ) b ON a.id = b.item_id
+    LEFT JOIN users u ON b.bidder_username = u.username
+    WHERE a.seller_username = %s AND a.status = 'expired'
+    ''', (seller_username,))
+    expired_items = cur.fetchall()
+
+    cur.execute('''
+    SELECT a.id, a.item_name, a.base_price, a.status, 
            COALESCE(u.email, 'Deleted') AS highest_bidder_email,
            a.image_url,  -- Fetch image URL (always present)
            (SELECT MAX(bid_amount) FROM bids WHERE item_id = a.id) AS highest_bid
@@ -315,7 +335,7 @@ def my_items():
 
     cur.close()
 
-    return render_template('my_items.html', active_items=active_items, closed_items=closed_items)
+    return render_template('my_items.html', active_items=active_items, expired_items=expired_items, closed_items=closed_items)
 
 
 @app.route('/bid_items')
@@ -338,8 +358,8 @@ def bid_items():
 def update_auction_status():
     cur = mysql.connection.cursor()
 
-    three_days_ago = datetime.now() - timedelta(days=3)
-    cur.execute("SELECT id FROM auction_items WHERE status = 'active' AND created_at <= %s", (three_days_ago,))
+    days_ago = datetime.now() - timedelta(days=1)
+    cur.execute("SELECT id FROM auction_items WHERE status = 'active' AND created_at <= %s", (days_ago,))
     expired_items = cur.fetchall()
 
     for item in expired_items:
@@ -362,7 +382,7 @@ def update_auction_status():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=update_auction_status, trigger="interval", hours=1) 
+scheduler.add_job(func=update_auction_status, trigger="interval", minutes=1) 
 scheduler.start()
 
 if __name__ == '__main__':
