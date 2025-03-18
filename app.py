@@ -18,6 +18,7 @@ app.config['MYSQL_CONNECT_TIMEOUT'] = 20
 
 mysql = MySQL(app)
 
+
 def init_db():
     cur = mysql.connection.cursor()
     cur.execute('''
@@ -147,6 +148,7 @@ def user_home():
         return render_template('user_home.html',user_name = user_name,username = username, active_items=active_items, expired_items=expired_items, closed_items=closed_items, bid_items=bid_items)
     return redirect(url_for('login'))
 
+
 @app.route('/submit_item_page')
 def submit_item_page():
     return render_template('submit_item.html')
@@ -172,6 +174,7 @@ def submit_item():
     flash("You must be logged in to submit an item.", "error")
     return redirect(url_for('login'))
 
+
 @app.route('/bid', methods=['POST'])
 def place_bid():
     if 'username' in session:
@@ -181,7 +184,6 @@ def place_bid():
 
         cur = mysql.connection.cursor()
 
-        # Fetch base price and highest bid
         cur.execute("""
             SELECT base_price, COALESCE(MAX(bid_amount), 0) 
             FROM auction_items 
@@ -190,7 +192,6 @@ def place_bid():
         """, (item_id,))
         base_price, highest_bid = cur.fetchone()
 
-        # Validate bid amount
         if bid_amount <= base_price or bid_amount <= highest_bid:
             flash("Error: Bid must be higher than the base price and the current highest bid.", "error")
         else:
@@ -202,6 +203,7 @@ def place_bid():
         cur.close()
 
     return redirect(request.referrer) 
+
 
 @app.route('/close_auction', methods=['POST'])
 def close_auction():
@@ -270,6 +272,7 @@ def logout():
     session.pop('role', None)
     return redirect(url_for('login'))
 
+
 @app.route('/my_items')
 def my_items():
     if 'username' not in session:
@@ -288,7 +291,6 @@ def my_items():
     GROUP BY ai.id, ai.item_name, ai.base_price, ai.image_url
 """, (session['username'],))
     active_items = cur.fetchall()
-
 
     cur.execute('''
     SELECT a.id, a.item_name, a.base_price, a.status, 
@@ -316,8 +318,6 @@ def my_items():
     return render_template('my_items.html', active_items=active_items, closed_items=closed_items)
 
 
-
-
 @app.route('/bid_items')
 def bid_items():
     username = session.get('username')
@@ -333,6 +333,7 @@ def bid_items():
     bid_items = cur.fetchall()
     cur.close()
     return render_template('bid_items.html', bid_items=bid_items)
+
 
 def update_auction_status():
     cur = mysql.connection.cursor()
