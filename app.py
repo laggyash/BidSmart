@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, flash, render_template, request, redirect, url_for, session
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -5,12 +7,12 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
-app.secret_key = 'passkey'
-
-app.config['MYSQL_HOST'] = 'mysql-bidsmart.alwaysdata.net'
-app.config['MYSQL_USER'] = 'bidsmart'
-app.config['MYSQL_PASSWORD'] = 'jFgLoq6V'
-app.config['MYSQL_DB'] = 'bidsmart_db'
+load_dotenv()
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+app.secret_key = os.getenv('SECRET_KEY')
 app.config['MYSQL_PORT'] = 3306
 app.config['MYSQL_CONNECT_TIMEOUT'] = 20 
 
