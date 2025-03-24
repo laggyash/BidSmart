@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BidSmart - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: Arial, sans-serif;
+        font-family: 'Poppins', sans-serif;
       }
 
       body {
@@ -19,6 +20,7 @@
         align-items: center;
         height: 100vh;
         flex-direction: column;
+        text-align: center;
       }
 
       header {
@@ -33,43 +35,59 @@
 
       h1 {
         color: #0d47a1;
+        font-size: 48px;
+        font-weight: 600;
         margin-bottom: 20px;
+        text-align: center;
       }
 
       #container {
         background: white;
         padding: 30px;
         border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         text-align: center;
-        width: 300px;
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: auto;
       }
 
       button {
         background-color: #0d47a1;
         color: white;
-        padding: 12px 24px;
+        padding: 14px 26px;
         border: none;
-        border-radius: 8px;
-        font-size: 16px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 500;
         cursor: pointer;
-        width: 100%;
-        margin: 10px 0;
+        width: 80%;
+        margin: 12px 0;
         transition: 0.3s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       button:hover {
         background-color: #1565c0;
+        transform: scale(1.05);
       }
 
       a {
         text-decoration: none;
+        width: 100%;
+        display: flex;
+        justify-content: center;
       }
     </style>
   </head>
   <body>
     <header>
-      <img src="static/images/logo.png" alt="BidSmart Logo" class="logo" />
+      <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="BidSmart Logo" class="logo" />
       <h1>Welcome to BidSmart</h1>
       <div id="container">
         <a href="/register"><button>Register</button></a>

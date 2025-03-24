@@ -4,51 +4,64 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | BidSmart</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f5ff;
-        color: #333;
-        text-align: center;
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background-color: #f0f5ff;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
       }
 
       .container {
-        max-width: 400px;
-        margin: 50px auto;
-        padding: 20px;
+        max-width: 360px;
+        padding: 25px;
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
       }
 
       .logo-container {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
       }
 
       .logo {
-        max-width: 150px;
+        max-width: 130px;
         height: auto;
       }
 
       h2 {
-        color: #0056b3;
+        color: #0d47a1;
+        font-size: 26px;
+        margin-bottom: 15px;
       }
 
       form {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
       }
 
       input[type="text"],
       input[type="password"] {
-        width: 95%;
+        width: 100%;
         padding: 10px;
         border: 1px solid #ccc;
-        border-radius: 5px;
-        font-size: 16px;
+        border-radius: 6px;
+        font-size: 15px;
       }
 
       input[type="submit"],
@@ -56,11 +69,13 @@
         background-color: #007bff;
         color: white;
         border: none;
-        padding: 10px;
-        border-radius: 5px;
+        padding: 12px;
+        border-radius: 6px;
         font-size: 16px;
         cursor: pointer;
         transition: 0.3s;
+        width: 100%;
+        margin-top: 5px;
       }
 
       input[type="submit"]:hover,
@@ -69,14 +84,22 @@
       }
 
       p {
-        margin-top: 10px;
+        font-size: 14px;
+        margin-top: 12px;
       }
 
-      a button {
+      a {
+        text-decoration: none;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .register-button {
         background-color: #28a745;
       }
 
-      a button:hover {
+      .register-button:hover {
         background-color: #1e7e34;
       }
     </style>
@@ -85,7 +108,7 @@
     <div class="container">
       <div class="logo-container">
         <img
-          src="{{ url_for('static', filename='images/logo.png') }}"
+          src="{{ url_for('static', filename='images/logo.webp') }}"
           alt="BidSmart Logo"
           class="logo"
         />
@@ -97,15 +120,13 @@
         <input
           type="password"
           name="password"
-          placeholder="Password"
-          required
-        />
+          placeholder="Password" required />
         <input type="submit" value="Login" />
       </form>
 
       <p>Don't have an account?</p>
       <a href="{{ url_for('register') }}">
-        <button type="button">Register</button>
+        <button class="register-button">Register</button>
       </a>
     </div>
   </body>

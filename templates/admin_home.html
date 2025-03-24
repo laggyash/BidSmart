@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Home - BidSmart</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
+              * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
         body {
-            font-family: Arial, sans-serif;
             background-color: #f0f5ff;
             color: #333;
             text-align: center;
@@ -113,7 +122,7 @@
 <body>
     <div class="container">
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BidSmart Logo" class="logo">
+            <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="BidSmart Logo" class="logo">
         </div>
 
         <h1>Admin Dashboard</h1>

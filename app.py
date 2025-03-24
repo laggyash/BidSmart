@@ -387,3 +387,14 @@ scheduler.start()
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+'''
+{% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+'''

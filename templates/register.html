@@ -6,18 +6,30 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='styles.css') }}"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f8ff;
-        text-align: center;
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background-color: #e3f2fd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+        text-align: center;
       }
 
       .logo-container {
-        text-align: center;
-        margin-top: 20px;
+        padding-top: 10%;
       }
 
       .logo-container img {
@@ -26,52 +38,56 @@
       }
 
       h2 {
-        color: #007bff;
-        margin-top: 10px;
+        color: #0d47a1;
+        font-size: 36px;
+        font-weight: 600;
+        margin-bottom: 15px;
       }
 
       form {
         background: white;
         width: 400px;
-        margin: 20px auto;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         text-align: left;
       }
 
       label {
-        font-weight: bold;
+        font-weight: 500;
         display: block;
-        margin-top: 10px;
+        margin-top: 15px;
       }
 
       input,
       select {
-        width: calc(100% - 20px);
-        padding: 8px;
+        width: 100%;
+        padding: 10px;
         margin-top: 5px;
         border: 1px solid #ccc;
-        border-radius: 5px;
-        display: block;
+        border-radius: 6px;
+        font-size: 16px;
       }
 
       input[type="submit"],
       button {
-        background-color: #007bff;
+        background-color: #0d47a1;
         color: white;
         border: none;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 500;
         cursor: pointer;
         width: 100%;
         margin-top: 15px;
+        transition: 0.3s;
       }
 
       input[type="submit"]:hover,
       button:hover {
-        background-color: #0056b3;
+        background-color: #1565c0;
+        transform: scale(1.05);
       }
 
       #admin_code_section {
@@ -80,18 +96,27 @@
 
       p {
         font-size: 14px;
-        margin-top: 10px;
+        margin-top: 15px;
       }
 
-      a button {
-        width: 10%;
+      a {
+        text-decoration: none;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .login-button {
+        width: fit-content;
+        padding-left: 30px;
+        padding-right: 30px;
       }
     </style>
   </head>
   <body>
     <div class="logo-container">
       <img
-        src="{{ url_for('static', filename='images/logo.png') }}"
+        src="{{ url_for('static', filename='images/logo.webp') }}"
         alt="BidSmart Logo"
       />
     </div>
@@ -142,7 +167,7 @@
 
     <p>Already have an account?</p>
     <a href="{{ url_for('login') }}">
-      <button type="button">Login</button>
+      <button class="login-button">Login</button>
     </a>
   </body>
 </html>
