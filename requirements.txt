@@ -1,5 +1,5 @@
 Flask
-python-dotenv
-flask_mysqldb
+dotenv
+pymysql
 APScheduler
 werkzeug
