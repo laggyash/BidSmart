@@ -1,11 +1,12 @@
 import os
+import pymysql
 from dotenv import load_dotenv
 from flask import Flask, flash, render_template, request, redirect, url_for, session
-from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
+pymysql.install_as_MySQLdb()
 app = Flask(__name__)
 load_dotenv()
 app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
@@ -16,11 +17,21 @@ app.secret_key = os.getenv('SECRET_KEY')
 app.config['MYSQL_PORT'] = 3306
 app.config['MYSQL_CONNECT_TIMEOUT'] = 20 
 
-mysql = MySQL(app)
+def get_db_connection():
+    return pymysql.connect(
+        host=os.getenv('MYSQL_HOST'),
+        user=os.getenv('MYSQL_USER'),
+        password=os.getenv('MYSQL_PASSWORD'),
+        db=os.getenv('MYSQL_DB'),
+        port=3306,
+        connect_timeout=20,
+        autocommit=False
+    )
 
 
 def init_db():
-    cur = mysql.connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
     cur.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -40,7 +51,7 @@ def init_db():
             status ENUM('active', 'closed', 'expired', 'deleted') DEFAULT 'active',
             seller_username VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (seller_username) REFERENCES users(username)
+            FOREIGN KEY (seller_username) REFERENCES users(username) ON DELETE CASCADE
         )
     ''')
 
@@ -51,11 +62,11 @@ def init_db():
             bidder_username VARCHAR(50) NOT NULL,
             bid_amount DECIMAL(10,2) NOT NULL,
             bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (item_id) REFERENCES auction_items(id),
-            FOREIGN KEY (bidder_username) REFERENCES users(username)
+            FOREIGN KEY (item_id) REFERENCES auction_items(id) ON DELETE CASCADE,
+            FOREIGN KEY (bidder_username) REFERENCES users(username) ON DELETE CASCADE
         )
     ''')
-    mysql.connection.commit()
+    conn.commit()
     cur.close()
 
 
@@ -81,14 +92,15 @@ def register():
         if role == 'admin' and request.form['admin_code'] != 'admin_bidsmart':
             return "Invalid admin registration code!"
 
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         try:
             cur.execute("INSERT INTO users (name, username, email, password, role) VALUES (%s, %s, %s, %s, %s)", 
                         (name, username, email, password, role))
-            mysql.connection.commit()
+            conn.commit()
             return redirect(url_for('login'))
         except Exception as e:
-            mysql.connection.rollback()
+            conn.rollback()
             print("Error:", e)
         finally:
             cur.close()
@@ -102,7 +114,8 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
@@ -127,7 +140,8 @@ def login():
 def user_home():
     if 'username' in session:
         username = session['username']
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
 
         cur.execute("SELECT name FROM users WHERE username = %s", (username,))
         user_name = cur.fetchone()[0]
@@ -162,10 +176,11 @@ def submit_item():
         image_url = request.form['image_url']
         seller_username = session['username']
 
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("INSERT INTO auction_items (item_name, base_price, image_url, seller_username, created_at, status) VALUES (%s, %s, %s, %s, NOW(), 'active')",
                     (item_name, base_price, image_url, seller_username))
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
 
         flash("Item added successfully! It will be active for 3 days.", "success")
@@ -182,7 +197,8 @@ def place_bid():
         bid_amount = float(request.form['bid_amount'])  
         bidder_username = session['username']
 
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
 
         cur.execute("""
             SELECT base_price, COALESCE(MAX(bid_amount), 0) 
@@ -197,7 +213,7 @@ def place_bid():
         else:
             cur.execute("INSERT INTO bids (item_id, bidder_username, bid_amount) VALUES (%s, %s, %s)",
                         (item_id, bidder_username, bid_amount))
-            mysql.connection.commit()
+            conn.commit()
             flash("Bid placed successfully!", "success")
 
         cur.close()
@@ -209,9 +225,10 @@ def place_bid():
 def close_auction():
     if 'username' in session:
         item_id = request.form['item_id']
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("UPDATE auction_items SET status = 'closed' WHERE id = %s AND seller_username = %s", (item_id, session['username']))
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
     return redirect(url_for('my_items'))
 
@@ -219,7 +236,8 @@ def close_auction():
 @app.route('/admin_home')
 def admin_home():
     if 'username' in session and session['role'] == 'admin':
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("SELECT id, name, username, email, role FROM users where username != 'admin'")
         users = cur.fetchall()
         cur.execute("SELECT * FROM auction_items WHERE status = 'active'")
@@ -238,9 +256,10 @@ def admin_home():
 def change_role(user_id):
     if 'username' in session and session['role'] == 'admin':
         new_role = request.form['new_role']
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
     return redirect(url_for('admin_home'))
 
@@ -248,9 +267,10 @@ def change_role(user_id):
 @app.route('/delete_user/<int:user_id>')
 def delete_user(user_id):
     if 'username' in session and session['role'] == 'admin':
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
     return redirect(url_for('admin_home'))
 
@@ -259,9 +279,10 @@ def delete_user(user_id):
 def change_status(item_id):
     if 'username' in session and session['role'] == 'admin':
         new_status = request.form['new_status']
-        cur = mysql.connection.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("UPDATE auction_items SET status = %s WHERE id = %s", (new_status, item_id))
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
     return redirect(url_for('admin_home'))
 
@@ -280,7 +301,8 @@ def my_items():
         return redirect(url_for('login'))
 
     seller_username = session['username']
-    cur = mysql.connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
     cur.execute("""
     SELECT ai.id, ai.item_name, ai.base_price, ai.image_url, 
@@ -341,7 +363,8 @@ def my_items():
 @app.route('/bid_items')
 def bid_items():
     username = session.get('username')
-    cur = mysql.connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
     cur.execute("""
     SELECT ai.id, ai.item_name, ai.base_price, ai.image_url, 
            COALESCE(MAX(b.bid_amount), 'None') AS highest_bid
@@ -356,7 +379,8 @@ def bid_items():
 
 
 def update_auction_status():
-    cur = mysql.connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
     days_ago = datetime.now() - timedelta(days=1)
     cur.execute("SELECT id FROM auction_items WHERE status = 'active' AND created_at <= %s", (days_ago,))
@@ -377,7 +401,7 @@ def update_auction_status():
         else:
             cur.execute("UPDATE auction_items SET status = 'expired' WHERE id = %s", (item_id,))
 
-    mysql.connection.commit()
+    conn.commit()
     cur.close()
 
 
